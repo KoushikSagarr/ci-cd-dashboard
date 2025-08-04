@@ -1,28 +1,38 @@
-import { FiAlertTriangle, FiCheckCircle, FiInfo } from "react-icons/fi";
+import { FiAlertTriangle, FiInfo } from "react-icons/fi";
+import type { ReactNode } from "react";
 
-const levelIcons = {
-  INFO: <FiInfo color="#2563eb" />,       // blue-600
-  WARN: <FiAlertTriangle color="#f59e0b" />, // amber-500
-  ERROR: <FiAlertTriangle color="#ef4444" /> // red-500
+type LogLevel = "INFO" | "WARN" | "ERROR";
+
+const levelIcons: Record<LogLevel, ReactNode> = {
+  INFO: <FiInfo color="#2563eb" />,
+  WARN: <FiAlertTriangle color="#f59e0b" />,
+  ERROR: <FiAlertTriangle color="#ef4444" />
+};
+
+const bgColor: Record<LogLevel, string> = {
+  INFO: "#e0f2fe",   // light blue
+  WARN: "#fef3c7",   // soft yellow
+  ERROR: "#fee2e2"   // soft red
 };
 
 type LogCardProps = {
-  log: any;
+  log: {
+    level: string;
+    timestamp: string;
+    message: string;
+    pipelineId: string;
+  };
   onClick: () => void;
 };
 
 function LogCard({ log, onClick }: LogCardProps) {
-  const bgColor = {
-    INFO: "#e0f2fe",   // light blue
-    WARN: "#fef3c7",   // soft yellow
-    ERROR: "#fee2e2"   // soft red
-  };
+  const level = log.level as LogLevel;
 
   return (
     <div
       onClick={onClick}
       style={{
-        background: bgColor[log.level] || "#f1f5f9",
+        background: bgColor[level] || "#f1f5f9",
         borderRadius: "10px",
         padding: "16px",
         marginBottom: "16px",
@@ -35,7 +45,7 @@ function LogCard({ log, onClick }: LogCardProps) {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {levelIcons[log.level] || <FiInfo />}
+          {levelIcons[level] || <FiInfo />}
           <strong style={{ fontSize: "14px" }}>{log.level}</strong>
         </div>
         <span style={{ fontSize: "12px", color: "#475569" }}>

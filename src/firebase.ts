@@ -2,7 +2,6 @@
 
 // ✅ Import necessary Firebase modules
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore"; // ✅ This was missing
 
 // ✅ Your Firebase project configuration
@@ -18,9 +17,6 @@ const firebaseConfig = {
 
 // ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Optional: analytics (only works in browser with HTTPS)
-const analytics = getAnalytics(app);
 
 // ✅ Export Firestore database
 export const db = getFirestore(app);

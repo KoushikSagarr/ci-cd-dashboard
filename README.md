@@ -2,10 +2,7 @@
 
 A real-time dashboard to visualize and monitor logs from your CI/CD pipeline. Built with **React**, **Vite**, **Firebase Firestore**, and styled with **ShadCN UI + CSS Modules**.
 
-![Preview](./preview.png) <!-- Add a screenshot here if available -->
-
 ---
-
 ## 🔍 Features
 
 - 📡 **Real-time Firestore log updates**
@@ -71,7 +68,7 @@ App runs at: http://localhost:5173
 
 ## 🧱 Firestore Log Structure
 Logs are stored in a Firestore collection called logs. Each log document should follow this format:
-
+```
 json
 Copy
 Edit
@@ -85,8 +82,9 @@ Edit
     "status": "success"
   }
 }
-
+```
 ## 🛠 Project Structure
+```
 css
 Copy
 Edit
@@ -101,8 +99,9 @@ src/
 │   └── Dashboard.module.css
 ├── firebase.ts
 └── main.tsx
+```
 
-🔗 Integrate with Jenkins (Optional)
+# 🔗 Integrate with Jenkins (Optional)
 You can send logs from Jenkins into Firestore using a Node.js script + Firebase Admin SDK.
 
 

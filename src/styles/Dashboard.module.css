@@ -1,0 +1,55 @@
+:root {
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --info: #3b82f6;
+  --warn: #f59e0b;
+  --error: #ef4444;
+  --radius: 12px;
+}
+
+body {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.dashboardContainer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg);
+}
+
+.contentWrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.logWindow {
+  flex: 1;
+  max-width: 960px;
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.logWindow::-webkit-scrollbar {
+  width: 8px;
+}
+.logWindow::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.logWindow::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

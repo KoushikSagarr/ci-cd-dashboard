@@ -1,18 +1,20 @@
-import { FiAlertTriangle, FiInfo } from "react-icons/fi";
+import { FiAlertTriangle, FiInfo,FiCheckCircle } from "react-icons/fi";
 import type { ReactNode } from "react";
 
-type LogLevel = "INFO" | "WARN" | "ERROR";
+type LogLevel = "INFO" | "WARN" | "ERROR"| "SUCCESS";
 
 const levelIcons: Record<LogLevel, ReactNode> = {
   INFO: <FiInfo color="#2563eb" />,
   WARN: <FiAlertTriangle color="#f59e0b" />,
-  ERROR: <FiAlertTriangle color="#ef4444" />
+  ERROR: <FiAlertTriangle color="#ef4444" />,
+  SUCCESS: <FiCheckCircle color="#16a34a" /> 
 };
 
 const bgColor: Record<LogLevel, string> = {
-  INFO: "#e0f2fe",   // light blue
-  WARN: "#fef3c7",   // soft yellow
-  ERROR: "#fee2e2"   // soft red
+  INFO: "#e0f2fe",   
+  WARN: "#fef3c7",   
+  ERROR: "#fee2e2",   
+  SUCCESS: "#dcfce7"
 };
 
 type LogCardProps = {

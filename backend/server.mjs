@@ -37,7 +37,7 @@ const JENKINS_URL = process.env.JENKINS_URL;
 const JENKINS_USER = process.env.JENKINS_USER;
 const JENKINS_TOKEN = process.env.JENKINS_TOKEN;
 const JENKINS_JOB_NAME = process.env.JENKINS_JOB_NAME;
-const JENKINS_BUILD_TOKEN = process.env.JENKINS_BUILD_TOKEN; // From .env
+const JENKINS_BUILD_TOKEN = process.env.JENKINS_BUILD_TOKEN;
 
 const authHeader = `Basic ${Buffer.from(`${JENKINS_USER}:${JENKINS_TOKEN}`).toString("base64")}`;
 
@@ -84,7 +84,7 @@ async function connectToJenkins() {
   }, 5000); // Check every 5 seconds
 }
 
-
+// All middleware and functions must be defined before the routes that use them
 app.use(express.json());
 
 // --- Security Middleware to handle Jenkins API token ---
@@ -139,9 +139,7 @@ app.post("/api/log-final-status", authenticateRequest, async (req, res) => {
     if (!status || !jobName || !buildNumber) {
       return res.status(400).send("Missing data in request body.");
     }
-
     console.log(`Received final build status for ${jobName}#${buildNumber}: ${status}`);
-
     await db.collection("builds").add({
       jobName,
       buildNumber,
@@ -149,9 +147,7 @@ app.post("/api/log-final-status", authenticateRequest, async (req, res) => {
       consoleLink,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
-
     io.emit("build-status-update", { jobName, buildNumber, status, consoleLink });
-
     res.status(200).send("Build status saved to Firebase.");
   } catch (error) {
     console.error("Error saving final build status to Firebase:", error);
@@ -265,5 +261,5 @@ server.on('error', (err) => {
 server.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   await setupNgrokTunnel();
-  await connectToJenkins(); // The server now waits for Jenkins to be ready.
+  await connectToJenkins();
 });

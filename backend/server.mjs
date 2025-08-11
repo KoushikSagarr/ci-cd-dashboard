@@ -37,7 +37,6 @@ const JENKINS_URL = process.env.JENKINS_URL;
 const JENKINS_USER = process.env.JENKINS_USER;
 const JENKINS_TOKEN = process.env.JENKINS_TOKEN;
 const JENKINS_JOB_NAME = process.env.JENKINS_JOB_NAME;
-const JENKINS_BUILD_TOKEN = process.env.JENKINS_BUILD_TOKEN;
 
 const authHeader = `Basic ${Buffer.from(`${JENKINS_USER}:${JENKINS_TOKEN}`).toString("base64")}`;
 
@@ -56,12 +55,6 @@ async function setupNgrokTunnel() {
     console.error("Error setting up ngrok tunnel:", error);
     process.exit(1);
   }
-}
-
-// Function to poll Jenkins until it's online
-async function connectToJenkins() {
-  console.log("Jenkins is now online and connected.");
-  return;
 }
 
 app.use(express.json());
@@ -88,9 +81,11 @@ const authenticateRequest = (req, res, next) => {
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // --- GitHub Webhook Endpoint ---
+// We now pass the webhook payload to the Jenkins trigger function
 app.post("/api/github-webhook", async (req, res) => {
   console.log("Received GitHub webhook. Triggering Jenkins build...");
   try {
+    // Pass the GitHub payload from the webhook to the Jenkins trigger function
     const buildInfo = await triggerJenkinsBuild(req.body);
     res.status(200).send("Webhook received, Jenkins build triggered.");
   } catch (error) {
@@ -103,7 +98,7 @@ app.post("/api/github-webhook", async (req, res) => {
 app.get("/api/trigger-build", async (req, res) => {
   console.log("Manual build trigger received.");
   try {
-    const buildInfo = await triggerJenkinsBuild({});
+    const buildInfo = await triggerJenkinsBuild();
     res.status(200).json(buildInfo);
   } catch (error) {
     console.error("Failed to trigger Jenkins build manually:", error);
@@ -118,7 +113,9 @@ app.post("/api/log-final-status", authenticateRequest, async (req, res) => {
     if (!status || !jobName || !buildNumber) {
       return res.status(400).send("Missing data in request body.");
     }
+
     console.log(`Received final build status for ${jobName}#${buildNumber}: ${status}`);
+
     await db.collection("builds").add({
       jobName,
       buildNumber,
@@ -126,7 +123,9 @@ app.post("/api/log-final-status", authenticateRequest, async (req, res) => {
       consoleLink,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
+
     io.emit("build-status-update", { jobName, buildNumber, status, consoleLink });
+
     res.status(200).send("Build status saved to Firebase.");
   } catch (error) {
     console.error("Error saving final build status to Firebase:", error);
@@ -135,29 +134,30 @@ app.post("/api/log-final-status", authenticateRequest, async (req, res) => {
 });
 
 // --- Jenkins Build and Log Streaming Functions ---
+// The function now accepts an optional payload from the webhook
 async function triggerJenkinsBuild(payload = {}) {
-  const jenkinsBuildUrl = `${JENKINS_URL}/job/${JENKINS_JOB_NAME}/buildWithParameters?token=${JENKINS_BUILD_TOKEN}`;
-
+  const jenkinsBuildUrl = `${JENKINS_URL}/job/${JENKINS_JOB_NAME}/build`;
   try {
-    const fetchOptions = {
-        method: "POST",
-        headers: {
-            "Authorization": authHeader,
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-    };
-
-    const response = await fetch(jenkinsBuildUrl, fetchOptions);
+    // We now include a request body with the GitHub payload
+    const response = await fetch(jenkinsBuildUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": authHeader,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload), // Send the GitHub payload as the body
+    });
 
     if (response.ok) {
       console.log("Jenkins job triggered successfully.");
+
       const locationHeader = response.headers.get('location');
       const queueId = locationHeader ? locationHeader.match(/\/queue\/item\/(\d+)\//)[1] : null;
 
       if (queueId) {
         pollForBuildNumber(queueId);
       }
+
       return { status: "BUILD_TRIGGERED" };
     } else {
       const errorText = await response.text();
@@ -240,5 +240,4 @@ server.on('error', (err) => {
 server.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   await setupNgrokTunnel();
-  await connectToJenkins();
 });

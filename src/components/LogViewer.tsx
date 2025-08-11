@@ -5,8 +5,8 @@ import LogCard from "./LogCard";
 import LogDetailsModal from "./LogDetailsModal";
 import styles from "../styles/Dashboard.module.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiActivity, FiCheckCircle, FiXCircle,FiInfo } from "react-icons/fi";
 import { RingLoader } from 'react-spinners';
+import { FiActivity,FiCheckCircle, FiXCircle, FiInfo } from "react-icons/fi";
 
 interface Build {
   id: string;
@@ -45,25 +45,20 @@ function LogViewer() {
   }, []);
 
   useEffect(() => {
-    // Polls the Node.js backend for Jenkins status
     const checkLiveStatus = async () => {
       try {
-        const response = await fetch("http://localhost:4000/api/jenkins/last-build-status");
-        if (response.ok) {
-            const data = await response.json();
-            setIsBuilding(data.building);
-            setJenkinsOnline(true);
-            setLiveStatus(data.building ? "Build is running..." : "Waiting for build...");
-        } else {
-            throw new Error("Jenkins is offline or proxy failed");
-        }
+        const response = await fetch("http://localhost:8080/job/ci-cd-pipeline/lastBuild/api/json");
+        const data = await response.json();
+        setIsBuilding(data.building);
+        setJenkinsOnline(true);
+        setLiveStatus(data.building ? "Build is running..." : "Waiting for build...");
       } catch (error) {
         setJenkinsOnline(false);
         setIsBuilding(false);
         setLiveStatus("Jenkins is offline");
       }
     };
-
+    
     checkLiveStatus();
     const interval = setInterval(checkLiveStatus, 5000);
     return () => clearInterval(interval);
@@ -75,10 +70,20 @@ function LogViewer() {
     return styles.waiting;
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1, 
+      transition: { 
+        staggerChildren: 0.05
+      } 
+    },
+  };
+
   return (
     <div className={styles.logListContainer}>
       <div className={styles.sidebar}>
-        <motion.div
+        <motion.div 
           className={styles.liveStatusCard}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -109,9 +114,9 @@ function LogViewer() {
             </div>
           </div>
           <p className={styles.liveStatusText}>{liveStatus}</p>
-
+          
           <div className={styles.statsGrid}>
-            <motion.div
+            <motion.div 
               className={styles.statCard}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -119,7 +124,7 @@ function LogViewer() {
               <div className={styles.statValue}>{stats.total}</div>
               <div className={styles.statLabel}>Total</div>
             </motion.div>
-            <motion.div
+            <motion.div 
               className={styles.statCard}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -127,7 +132,7 @@ function LogViewer() {
               <div className={styles.statValue} style={{ color: 'var(--success)' }}>{stats.success}</div>
               <div className={styles.statLabel}>Success</div>
             </motion.div>
-            <motion.div
+            <motion.div 
               className={styles.statCard}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -135,7 +140,7 @@ function LogViewer() {
               <div className={styles.statValue} style={{ color: 'var(--error)' }}>{stats.failure}</div>
               <div className={styles.statLabel}>Failed</div>
             </motion.div>
-            <motion.div
+            <motion.div 
               className={styles.statCard}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -173,9 +178,9 @@ function LogViewer() {
           </motion.div>
         ) : (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ staggerChildren: 0.05 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
           >
             <AnimatePresence>
               {builds.map((build, index) => (
@@ -187,9 +192,9 @@ function LogViewer() {
                   transition={{ delay: index * 0.05 }}
                   layout
                 >
-                  <LogCard
-                    log={build}
-                    onClick={() => setSelectedBuild(build)}
+                  <LogCard 
+                    log={build} 
+                    onClick={() => setSelectedBuild(build)} 
                   />
                 </motion.div>
               ))}

@@ -81,11 +81,11 @@ const authenticateRequest = (req, res, next) => {
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // --- GitHub Webhook Endpoint ---
-// We now pass the webhook payload to the Jenkins trigger function
+// The payload is now passed from the webhook to the Jenkins trigger function
 app.post("/api/github-webhook", async (req, res) => {
   console.log("Received GitHub webhook. Triggering Jenkins build...");
   try {
-    // Pass the GitHub payload from the webhook to the Jenkins trigger function
+    // Pass the GitHub payload to the Jenkins trigger function
     const buildInfo = await triggerJenkinsBuild(req.body);
     res.status(200).send("Webhook received, Jenkins build triggered.");
   } catch (error) {
@@ -98,7 +98,8 @@ app.post("/api/github-webhook", async (req, res) => {
 app.get("/api/trigger-build", async (req, res) => {
   console.log("Manual build trigger received.");
   try {
-    const buildInfo = await triggerJenkinsBuild();
+    // The manual trigger will send an empty object
+    const buildInfo = await triggerJenkinsBuild({});
     res.status(200).json(buildInfo);
   } catch (error) {
     console.error("Failed to trigger Jenkins build manually:", error);

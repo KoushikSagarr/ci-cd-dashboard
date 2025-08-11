@@ -46,7 +46,7 @@ let NGROK_TUNNEL_URL = null;
 async function setupNgrokTunnel() {
   try {
     NGROK_TUNNEL_URL = await ngrok.connect({
-      authtoken: process.env.NGROK_AUTH_TOKEN, // Pass the token directly here
+      authtoken: process.env.NGROK_AUTH_TOKEN,
       proto: 'http',
       addr: process.env.PORT || 4000
     });
@@ -81,10 +81,12 @@ const authenticateRequest = (req, res, next) => {
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // --- GitHub Webhook Endpoint ---
+// We now pass the webhook payload to the Jenkins trigger function
 app.post("/api/github-webhook", async (req, res) => {
   console.log("Received GitHub webhook. Triggering Jenkins build...");
   try {
-    const buildInfo = await triggerJenkinsBuild();
+    // Pass the GitHub payload from the webhook to the Jenkins trigger function
+    const buildInfo = await triggerJenkinsBuild(req.body);
     res.status(200).send("Webhook received, Jenkins build triggered.");
   } catch (error) {
     console.error("Failed to trigger Jenkins build via webhook:", error);
@@ -132,14 +134,18 @@ app.post("/api/log-final-status", authenticateRequest, async (req, res) => {
 });
 
 // --- Jenkins Build and Log Streaming Functions ---
-async function triggerJenkinsBuild() {
+// The function now accepts an optional payload from the webhook
+async function triggerJenkinsBuild(payload = {}) {
   const jenkinsBuildUrl = `${JENKINS_URL}/job/${JENKINS_JOB_NAME}/build`;
   try {
+    // We now include a request body with the GitHub payload
     const response = await fetch(jenkinsBuildUrl, {
       method: "POST",
       headers: {
         "Authorization": authHeader,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify(payload), // Send the GitHub payload as the body
     });
 
     if (response.ok) {

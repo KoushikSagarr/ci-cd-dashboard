@@ -1,22 +1,20 @@
 // src/firebase.ts
-
-// ✅ Import necessary Firebase modules
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; // ✅ This was missing
+import { getFirestore } from "firebase/firestore";
 
-// ✅ Your Firebase project configuration
+// Your web app's Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyCceCRVJOq65rySzKtHOP2BJdMoybQpnSg",
-  authDomain: "ci-cd-dashboard-c4071.firebaseapp.com",
-  projectId: "ci-cd-dashboard-c4071",
-  storageBucket: "ci-cd-dashboard-c4071.firebasestorage.app",
-  messagingSenderId: "967725892866",
-  appId: "1:967725892866:web:b811b0e842bf28fcbdee1b",
-  measurementId: "G-2EWY500ZQP"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// ✅ Initialize Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// ✅ Export Firestore database
+// Export Firestore database
 export const db = getFirestore(app);

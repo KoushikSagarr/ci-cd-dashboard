@@ -1,68 +1,56 @@
-import { FiAlertTriangle, FiInfo,FiCheckCircle } from "react-icons/fi";
+// src/components/LogCard.tsx
+import { FiAlertTriangle, FiInfo, FiCheckCircle, FiXCircle } from "react-icons/fi";
 import type { ReactNode } from "react";
+import styles from "../styles/Dashboard.module.css";
+import { motion } from 'framer-motion';
 
-type LogLevel = "INFO" | "WARN" | "ERROR"| "SUCCESS";
+type BuildStatus = "SUCCESS" | "UNSTABLE" | "FAILURE" | "ABORTED";
 
-const levelIcons: Record<LogLevel, ReactNode> = {
-  INFO: <FiInfo color="#2563eb" />,
-  WARN: <FiAlertTriangle color="#f59e0b" />,
-  ERROR: <FiAlertTriangle color="#ef4444" />,
-  SUCCESS: <FiCheckCircle color="#16a34a" /> 
-};
-
-const bgColor: Record<LogLevel, string> = {
-  INFO: "#e0f2fe",   
-  WARN: "#fef3c7",   
-  ERROR: "#fee2e2",   
-  SUCCESS: "#dcfce7"
+const statusIcons: Record<BuildStatus, ReactNode> = {
+  SUCCESS: <FiCheckCircle className={styles.successIcon} />,
+  UNSTABLE: <FiAlertTriangle className={styles.unstableIcon} />,
+  FAILURE: <FiXCircle className={styles.failureIcon} />,
+  ABORTED: <FiInfo className={styles.abortedIcon} />
 };
 
 type LogCardProps = {
   log: {
-    level: string;
-    timestamp: string;
-    message: string;
-    pipelineId: string;
+    status: string;
+    timestamp: any;
+    buildNumber: string;
+    jobName: string;
   };
   onClick: () => void;
 };
 
 function LogCard({ log, onClick }: LogCardProps) {
-  const level = log.level as LogLevel;
+  const status = log.status as BuildStatus;
 
   return (
-    <div
+    <motion.div
+      className={`${styles.logCard} ${styles[status.toLowerCase()]}`}
       onClick={onClick}
-      style={{
-        background: bgColor[level] || "#f1f5f9",
-        borderRadius: "10px",
-        padding: "16px",
-        marginBottom: "16px",
-        cursor: "pointer",
-        transition: "transform 0.2s ease-in-out",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.01)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      whileHover={{ scale: 1.02, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+      whileTap={{ scale: 0.98 }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {levelIcons[level] || <FiInfo />}
-          <strong style={{ fontSize: "14px" }}>{log.level}</strong>
+      <div className={styles.logCardHeader}>
+        <div className={styles.logCardStatus}>
+          {statusIcons[status] || <FiInfo className={styles.infoIcon} />}
+          <strong className={styles.logCardStatusText}>{log.status}</strong>
         </div>
-        <span style={{ fontSize: "12px", color: "#475569" }}>
-          {new Date(log.timestamp).toLocaleString()}
+        <span className={styles.logCardTimestamp}>
+          {log.timestamp?.toDate().toLocaleString()}
         </span>
       </div>
 
-      <div style={{ marginTop: "10px", fontWeight: 500, fontSize: "15px" }}>
-        {log.message}
+      <div className={styles.logCardJobName}>
+        Job: {log.jobName}
       </div>
 
-      <div style={{ fontSize: "12px", color: "#64748b", marginTop: "6px" }}>
-        Pipeline ID: {log.pipelineId}
+      <div className={styles.logCardBuildNumber}>
+        Build Number: #{log.buildNumber}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

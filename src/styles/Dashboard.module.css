@@ -1,55 +1,146 @@
-:root {
-  --bg: #f8fafc;
-  --card-bg: #ffffff;
-  --text: #1e293b;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --info: #3b82f6;
-  --warn: #f59e0b;
-  --error: #ef4444;
-  --radius: 12px;
-}
-
-body {
-  font-family: "Segoe UI", Roboto, sans-serif;
-  margin: 0;
-  background-color: var(--bg);
-  color: var(--text);
-}
-
+/* src/styles/Dashboard.module.css */
 .dashboardContainer {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: var(--bg);
+  padding: 2rem;
+  gap: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #111827;
 }
 
-.contentWrapper {
-  flex: 1;
+.sidebar {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.liveStatusCard {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.liveStatusHeader {
   display: flex;
-  justify-content: center;
-  padding: 24px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
-.logWindow {
-  flex: 1;
-  max-width: 960px;
-  width: 100%;
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  padding: 24px;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-  overflow-y: auto;
-  scrollbar-width: thin;
+.liveStatusTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
 }
 
-.logWindow::-webkit-scrollbar {
-  width: 8px;
+.liveStatusText {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
 }
-.logWindow::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
 }
-.logWindow::-webkit-scrollbar-thumb:hover {
+
+.triggerButton {
+  background: #111827;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.triggerButton:disabled {
   background: #94a3b8;
+  cursor: not-allowed;
 }
+
+.viewLiveLogsButton {
+  background: #e2e8f0;
+  color: #111827;
+  border: 1px solid #cbd5e1;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.logList {
+  flex-grow: 1;
+}
+
+.logListTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.noLogsText {
+  color: #64748b;
+}
+
+.logCard {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Status-based colors for log cards */
+.success { border-left: 4px solid #16a34a; }
+.failure { border-left: 4px solid #ef4444; }
+.unstable { border-left: 4px solid #f59e0b; }
+.aborted { border-left: 4px solid #64748b; }
+
+.logCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.logCardStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.logCardStatusText {
+  font-size: 0.875rem;
+}
+
+.logCardTimestamp {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.logCardJobName {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.logCardBuildNumber {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.successIcon { color: #16a34a; }
+.failureIcon { color: #ef4444; }
+.unstableIcon { color: #f59e0b; }
+.abortedIcon { color: #64748b; }

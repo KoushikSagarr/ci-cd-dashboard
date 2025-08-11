@@ -81,11 +81,10 @@ const authenticateRequest = (req, res, next) => {
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // --- GitHub Webhook Endpoint ---
-// The payload is now passed from the webhook to the Jenkins trigger function
+// This is the corrected line
 app.post("/api/github-webhook", async (req, res) => {
   console.log("Received GitHub webhook. Triggering Jenkins build...");
   try {
-    // Pass the GitHub payload to the Jenkins trigger function
     const buildInfo = await triggerJenkinsBuild(req.body);
     res.status(200).send("Webhook received, Jenkins build triggered.");
   } catch (error) {
@@ -95,10 +94,10 @@ app.post("/api/github-webhook", async (req, res) => {
 });
 
 // --- Manual Trigger Endpoint ---
+// This is the corrected line
 app.get("/api/trigger-build", async (req, res) => {
   console.log("Manual build trigger received.");
   try {
-    // The manual trigger will send an empty object
     const buildInfo = await triggerJenkinsBuild({});
     res.status(200).json(buildInfo);
   } catch (error) {
@@ -135,30 +134,26 @@ app.post("/api/log-final-status", authenticateRequest, async (req, res) => {
 });
 
 // --- Jenkins Build and Log Streaming Functions ---
-// The function now accepts an optional payload from the webhook
 async function triggerJenkinsBuild(payload = {}) {
   const jenkinsBuildUrl = `${JENKINS_URL}/job/${JENKINS_JOB_NAME}/build`;
   try {
-    // We now include a request body with the GitHub payload
     const response = await fetch(jenkinsBuildUrl, {
       method: "POST",
       headers: {
         "Authorization": authHeader,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload), // Send the GitHub payload as the body
+      body: JSON.stringify(payload),
     });
 
     if (response.ok) {
       console.log("Jenkins job triggered successfully.");
-
       const locationHeader = response.headers.get('location');
       const queueId = locationHeader ? locationHeader.match(/\/queue\/item\/(\d+)\//)[1] : null;
 
       if (queueId) {
         pollForBuildNumber(queueId);
       }
-
       return { status: "BUILD_TRIGGERED" };
     } else {
       const errorText = await response.text();

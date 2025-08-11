@@ -4,11 +4,17 @@ import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import LogCard from "./LogCard";
 import LogDetailsModal from "./LogDetailsModal";
-import { io } from "socket.io-client";
 import styles from "../styles/Dashboard.module.css";
-import { FiPlayCircle } from "react-icons/fi";
+import { motion } from "framer-motion";
 import { RingLoader } from 'react-spinners';
-import { motion } from 'framer-motion';
+import { FiPlayCircle } from "react-icons/fi";
+import { io } from "socket.io-client";
+
+// Define the props that this component will accept
+// The App.tsx file was passing this prop, but the LogViewer component didn't know about it.
+interface LogViewerProps {
+  onLiveLogClick?: () => void;
+}
 
 const socket = io("http://localhost:4000");
 
@@ -21,13 +27,13 @@ interface Build {
   jobName: string;
 }
 
-function LogViewer() {
+// Update the component to accept the defined props
+function LogViewer({ onLiveLogClick }: LogViewerProps) {
   const [builds, setBuilds] = useState<Build[]>([]);
   const [selectedBuild, setSelectedBuild] = useState<Build | null>(null);
   const [liveStatus, setLiveStatus] = useState<string>("Waiting for build...");
-  const [liveLogs, setLiveLogs] = useState<string[]>([]);
-  const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [liveLogs, setLiveLogs] = useState<string[]>([]);
 
   useEffect(() => {
     const q = query(collection(db, "builds"), orderBy("timestamp", "desc"));
@@ -55,30 +61,23 @@ function LogViewer() {
     };
   }, []);
 
-  const triggerManualBuild = async () => {
-    setIsBuilding(true);
-    setLiveStatus("Build triggered...");
-    setLiveLogs([]);
-    try {
-      const response = await fetch("http://localhost:4000/api/trigger-build");
-      if (!response.ok) {
-        setLiveStatus("Failed to trigger build");
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
       }
-    } catch (error) {
-      setLiveStatus("Failed to trigger build");
-    }
+    },
   };
 
-  const openLiveLogsModal = () => {
-    setIsLiveModalOpen(true);
-  };
-  
-  const closeLiveLogsModal = () => {
-    setIsLiveModalOpen(false);
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
   };
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={styles.logListContainer}>
       <div className={styles.sidebar}>
         <div className={styles.liveStatusCard}>
           <div className={styles.liveStatusHeader}>
@@ -86,25 +85,6 @@ function LogViewer() {
             {isBuilding ? <RingLoader size={20} color={"#2563eb"} /> : <FiPlayCircle size={20} color={"#16a34a"} />}
           </div>
           <p className={styles.liveStatusText}>{liveStatus}</p>
-          <div className={styles.actionButtons}>
-            <motion.button 
-              className={styles.triggerButton}
-              onClick={triggerManualBuild}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              disabled={isBuilding}
-            >
-              Trigger Build
-            </motion.button>
-            <motion.button
-              className={styles.viewLiveLogsButton}
-              onClick={openLiveLogsModal}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              View Live Logs
-            </motion.button>
-          </div>
         </div>
       </div>
       <div className={styles.logList}>
@@ -112,19 +92,25 @@ function LogViewer() {
         {builds.length === 0 ? (
           <p className={styles.noLogsText}>No builds found in Firebase.</p>
         ) : (
-          builds.map((build) => (
-            <LogCard key={build.id} log={build} onClick={() => setSelectedBuild(build)} />
-          ))
+          <motion.div
+            className={styles.logList}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {builds.map((build) => (
+              <motion.div key={build.id} variants={itemVariants}>
+                <LogCard log={build} onClick={() => setSelectedBuild(build)} />
+              </motion.div>
+            ))}
+          </motion.div>
         )}
       </div>
       {selectedBuild && (
-        <LogDetailsModal log={selectedBuild} onClose={() => setSelectedBuild(null)} title={`Build #${selectedBuild.buildNumber}`} />
-      )}
-      {isLiveModalOpen && (
-        <LogDetailsModal 
-          log={{ details: liveLogs.join("") }} 
-          onClose={closeLiveLogsModal} 
-          title="Live Build Logs"
+        <LogDetailsModal
+          log={selectedBuild}
+          onClose={() => setSelectedBuild(null)}
+          title={`Build #${selectedBuild.buildNumber}`}
         />
       )}
     </div>

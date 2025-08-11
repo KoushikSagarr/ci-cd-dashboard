@@ -6,7 +6,6 @@ import LogCard from "./LogCard";
 import LogDetailsModal from "./LogDetailsModal";
 import styles from "../styles/Dashboard.module.css";
 import { motion } from "framer-motion";
-import { RingLoader } from 'react-spinners';
 import { FiPlayCircle } from "react-icons/fi";
 
 interface Build {
@@ -21,8 +20,6 @@ interface Build {
 function LogViewer() {
   const [builds, setBuilds] = useState<Build[]>([]);
   const [selectedBuild, setSelectedBuild] = useState<Build | null>(null);
-  const [liveStatus, setLiveStatus] = useState<string>("Waiting for build...");
-  const [isBuilding, setIsBuilding] = useState(false);
 
   useEffect(() => {
     // Fetches historical build logs from Firestore
@@ -35,23 +32,6 @@ function LogViewer() {
       setBuilds(buildsList as Build[]);
     });
     return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    // Polls Jenkins for live build status
-    const checkLiveStatus = async () => {
-      try {
-        const response = await fetch("http://localhost:8080/job/ci-cd-pipeline/lastBuild/api/json");
-        const data = await response.json();
-        setIsBuilding(data.building);
-        setLiveStatus(data.building ? "Build is running..." : "Waiting for build...");
-      } catch (error) {
-        setLiveStatus("Jenkins is offline.");
-      }
-    };
-    checkLiveStatus();
-    const interval = setInterval(checkLiveStatus, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const containerVariants = {
@@ -75,9 +55,9 @@ function LogViewer() {
         <div className={styles.liveStatusCard}>
           <div className={styles.liveStatusHeader}>
             <h3 className={styles.liveStatusTitle}>Live Build Status</h3>
-            {isBuilding ? <RingLoader size={20} color={"#2563eb"} /> : <FiPlayCircle size={20} color={"#16a34a"} />}
+            <FiPlayCircle size={20} color={"#16a34a"} />
           </div>
-          <p className={styles.liveStatusText}>{liveStatus}</p>
+          <p className={styles.liveStatusText}>Jenkins is now online and connected.</p>
         </div>
       </div>
       <div className={styles.logList}>

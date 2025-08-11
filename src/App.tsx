@@ -1,4 +1,3 @@
-// src/App.tsx
 import Navbar from "./components/Navbar";
 import LogViewer from "./components/LogViewer";
 import "./styles/Dashboard.module.css";

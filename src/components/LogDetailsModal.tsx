@@ -1,7 +1,9 @@
-// src/components/LogDetailsModal.tsx
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { FiX, FiExternalLink, FiClock, FiHash, FiActivity } from "react-icons/fi";
+import styles from "../styles/Dashboard.module.css";
+import { motion, AnimatePresence } from "framer-motion";
 
 type LogDetailsModalProps = {
   log: any;
@@ -15,11 +17,14 @@ function LogDetailsModal({ log, onClose, title }: LogDetailsModalProps) {
   useEffect(() => {
     const fetchDetails = async () => {
       if (log.id) {
-        // Fetch the full document from Firestore to get additional details
-        const docRef = doc(db, "builds", log.id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setDetails(JSON.stringify(docSnap.data(), null, 2));
+        try {
+          const docRef = doc(db, "builds", log.id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setDetails(JSON.stringify(docSnap.data(), null, 2));
+          }
+        } catch (error) {
+          setDetails("Error loading details...");
         }
       }
     };
@@ -27,74 +32,74 @@ function LogDetailsModal({ log, onClose, title }: LogDetailsModalProps) {
   }, [log.id]);
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0, 0, 0, 0.7)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 50
-      }}
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "#fff",
-          borderRadius: "16px",
-          padding: "32px",
-          maxWidth: "540px",
-          width: "100%",
-          boxShadow: "0 12px 30px rgba(0,0,0,0.3)"
-        }}
+    <AnimatePresence>
+      <motion.div
+        className={styles.modalOverlay}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
       >
-        <h2 style={{ marginBottom: "12px" }}>{title}</h2>
-        {log.buildNumber && (
-            <>
-                <p><strong>Build Number:</strong> {log.buildNumber}</p>
-                <p><strong>Status:</strong> {log.status}</p>
-                <p><strong>Timestamp:</strong> {log.timestamp.toDate().toLocaleString()}</p>
-                <p>
-                    <a href={log.consoleLink} target="_blank" rel="noopener noreferrer">
-                        View Jenkins Console
-                    </a>
-                </p>
-            </>
-        )}
-
-        <pre style={{
-          background: "#f1f5f9",
-          padding: "12px",
-          borderRadius: "8px",
-          fontSize: "13px",
-          marginTop: "14px",
-          whiteSpace: "pre-wrap",
-          wordWrap: "break-word",
-          maxHeight: "300px",
-          overflowY: "auto"
-        }}>
-          {details || "Loading details..."}
-        </pre>
-
-        <button
-          style={{
-            marginTop: "24px",
-            background: "#111827",
-            color: "#fff",
-            border: "none",
-            borderRadius: "8px",
-            padding: "10px 20px",
-            fontWeight: 500,
-            cursor: "pointer"
-          }}
-          onClick={onClose}
+        <motion.div
+          className={styles.modalContent}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
         >
-          Close
-        </button>
-      </div>
-    </div>
+          <div className={styles.modalHeader}>
+            <h2 className={styles.modalTitle}>{title}</h2>
+            <button className={styles.modalCloseButton} onClick={onClose}>
+              <FiX size={20} />
+            </button>
+          </div>
+
+          {log.buildNumber && (
+            <div className={styles.modalInfo}>
+              <div className={styles.modalInfoItem}>
+                <div className={styles.modalInfoLabel}>
+                  <FiHash size={12} /> Build Number
+                </div>
+                <div className={styles.modalInfoValue}>#{log.buildNumber}</div>
+              </div>
+              <div className={styles.modalInfoItem}>
+                <div className={styles.modalInfoLabel}>
+                  <FiActivity size={12} /> Status
+                </div>
+                <div className={styles.modalInfoValue}>{log.status}</div>
+              </div>
+              <div className={styles.modalInfoItem}>
+                <div className={styles.modalInfoLabel}>
+                  <FiClock size={12} /> Timestamp
+                </div>
+                <div className={styles.modalInfoValue}>
+                  {log.timestamp?.toDate().toLocaleString()}
+                </div>
+              </div>
+              <div className={styles.modalInfoItem}>
+                <div className={styles.modalInfoLabel}>
+                  <FiExternalLink size={12} /> Jenkins Console
+                </div>
+                <div className={styles.modalInfoValue}>
+                  <a 
+                    href={log.consoleLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={styles.modalLink}
+                  >
+                    View Console Output
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className={styles.modalDetails}>
+            {details || "Loading details..."}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

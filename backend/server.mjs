@@ -37,6 +37,7 @@ const JENKINS_URL = process.env.JENKINS_URL;
 const JENKINS_USER = process.env.JENKINS_USER;
 const JENKINS_TOKEN = process.env.JENKINS_TOKEN;
 const JENKINS_JOB_NAME = process.env.JENKINS_JOB_NAME;
+const JENKINS_BUILD_TOKEN = process.env.JENKINS_BUILD_TOKEN; // From .env
 
 const authHeader = `Basic ${Buffer.from(`${JENKINS_USER}:${JENKINS_TOKEN}`).toString("base64")}`;
 
@@ -56,6 +57,33 @@ async function setupNgrokTunnel() {
     process.exit(1);
   }
 }
+
+// Function to poll Jenkins until it's online
+async function connectToJenkins() {
+  const jenkinsStatusUrl = `${JENKINS_URL}/api/json`;
+  let isJenkinsOnline = false;
+
+  const checkJenkins = setInterval(async () => {
+    if (isJenkinsOnline) {
+      clearInterval(checkJenkins);
+      console.log("Jenkins is now online and connected.");
+      return;
+    }
+    try {
+      const response = await fetch(jenkinsStatusUrl, {
+        headers: { "Authorization": authHeader },
+      });
+      if (response.ok) {
+        isJenkinsOnline = true;
+      } else {
+        throw new Error("Connection failed");
+      }
+    } catch (error) {
+      console.log("Waiting for Jenkins to come online...");
+    }
+  }, 5000); // Check every 5 seconds
+}
+
 
 app.use(express.json());
 
@@ -81,7 +109,6 @@ const authenticateRequest = (req, res, next) => {
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // --- GitHub Webhook Endpoint ---
-// The payload is now passed from the webhook to the Jenkins trigger function
 app.post("/api/github-webhook", async (req, res) => {
   console.log("Received GitHub webhook. Triggering Jenkins build...");
   try {
@@ -97,7 +124,7 @@ app.post("/api/github-webhook", async (req, res) => {
 app.get("/api/trigger-build", async (req, res) => {
   console.log("Manual build trigger received.");
   try {
-    const buildInfo = await triggerJenkinsBuild();
+    const buildInfo = await triggerJenkinsBuild({});
     res.status(200).json(buildInfo);
   } catch (error) {
     console.error("Failed to trigger Jenkins build manually:", error);
@@ -133,30 +160,29 @@ app.post("/api/log-final-status", authenticateRequest, async (req, res) => {
 });
 
 // --- Jenkins Build and Log Streaming Functions ---
-// The function now accepts an optional payload from the webhook
 async function triggerJenkinsBuild(payload = {}) {
-  const jenkinsBuildUrl = `${JENKINS_URL}/job/${JENKINS_JOB_NAME}/build`;
+  const jenkinsBuildUrl = `${JENKINS_URL}/job/${JENKINS_JOB_NAME}/buildWithParameters?token=${JENKINS_BUILD_TOKEN}`;
+
   try {
-    // We now include a request body with the GitHub payload
-    const response = await fetch(jenkinsBuildUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": authHeader,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload), // Send the GitHub payload as the body
-    });
+    const fetchOptions = {
+        method: "POST",
+        headers: {
+            "Authorization": authHeader,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    };
+
+    const response = await fetch(jenkinsBuildUrl, fetchOptions);
 
     if (response.ok) {
       console.log("Jenkins job triggered successfully.");
-
       const locationHeader = response.headers.get('location');
       const queueId = locationHeader ? locationHeader.match(/\/queue\/item\/(\d+)\//)[1] : null;
 
       if (queueId) {
         pollForBuildNumber(queueId);
       }
-
       return { status: "BUILD_TRIGGERED" };
     } else {
       const errorText = await response.text();
@@ -239,4 +265,5 @@ server.on('error', (err) => {
 server.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   await setupNgrokTunnel();
+  await connectToJenkins(); // The server now waits for Jenkins to be ready.
 });

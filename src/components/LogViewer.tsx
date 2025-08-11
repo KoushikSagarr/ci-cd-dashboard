@@ -8,15 +8,6 @@ import styles from "../styles/Dashboard.module.css";
 import { motion } from "framer-motion";
 import { RingLoader } from 'react-spinners';
 import { FiPlayCircle } from "react-icons/fi";
-import { io } from "socket.io-client";
-
-// Define the props that this component will accept
-// The App.tsx file was passing this prop, but the LogViewer component didn't know about it.
-interface LogViewerProps {
-  onLiveLogClick?: () => void;
-}
-
-const socket = io("http://localhost:4000");
 
 interface Build {
   id: string;
@@ -27,15 +18,14 @@ interface Build {
   jobName: string;
 }
 
-// Update the component to accept the defined props
-function LogViewer({ onLiveLogClick }: LogViewerProps) {
+function LogViewer() {
   const [builds, setBuilds] = useState<Build[]>([]);
   const [selectedBuild, setSelectedBuild] = useState<Build | null>(null);
   const [liveStatus, setLiveStatus] = useState<string>("Waiting for build...");
   const [isBuilding, setIsBuilding] = useState(false);
-  const [liveLogs, setLiveLogs] = useState<string[]>([]);
 
   useEffect(() => {
+    // Fetches historical build logs from Firestore
     const q = query(collection(db, "builds"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const buildsList = snapshot.docs.map((doc) => ({
@@ -48,26 +38,29 @@ function LogViewer({ onLiveLogClick }: LogViewerProps) {
   }, []);
 
   useEffect(() => {
-    socket.on("build-status-update", (data: { status: string }) => {
-      setLiveStatus(data.status);
-      setIsBuilding(data.status === "IN_PROGRESS");
-    });
-    socket.on("build-log", (newLogs: string) => {
-      setLiveLogs(prevLogs => [...prevLogs, newLogs]);
-    });
-    return () => {
-      socket.off("build-status-update");
-      socket.off("build-log");
+    // Polls Jenkins for live build status
+    const checkLiveStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/job/ci-cd-pipeline/lastBuild/api/json");
+        const data = await response.json();
+        setIsBuilding(data.building);
+        setLiveStatus(data.building ? "Build is running..." : "Waiting for build...");
+      } catch (error) {
+        setLiveStatus("Jenkins is offline.");
+      }
     };
+    checkLiveStatus();
+    const interval = setInterval(checkLiveStatus, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
+    visible: { 
+      opacity: 1, 
+      transition: { 
         staggerChildren: 0.1
-      }
+      } 
     },
   };
 

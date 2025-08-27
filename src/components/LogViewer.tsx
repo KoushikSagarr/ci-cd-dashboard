@@ -5,7 +5,8 @@ import LogCard from "./LogCard";
 import LogDetailsModal from "./LogDetailsModal";
 import styles from "../styles/Dashboard.module.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiActivity, FiCheckCircle, FiInfo } from "react-icons/fi";
+import { RingLoader } from 'react-spinners';
+import { FiActivity, FiCheckCircle, FiXCircle, FiInfo, FiCloud } from "react-icons/fi";
 
 interface Build {
   id: string;
@@ -16,9 +17,25 @@ interface Build {
   jobName: string;
 }
 
+interface DockerStatus {
+  running: boolean;
+  status: string;
+}
+
 function LogViewer() {
   const [builds, setBuilds] = useState<Build[]>([]);
   const [selectedBuild, setSelectedBuild] = useState<Build | null>(null);
+  const [liveStatus, setLiveStatus] = useState<string>("Waiting for build...");
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [jenkinsOnline, setJenkinsOnline] = useState(true);
+  const [dockerStatus, setDockerStatus] = useState<DockerStatus | null>(null);
+
+  const stats = {
+    total: builds.length,
+    success: builds.filter(b => b.status === 'SUCCESS').length,
+    failure: builds.filter(b => b.status === 'FAILURE').length,
+    unstable: builds.filter(b => b.status === 'UNSTABLE').length,
+  };
 
   useEffect(() => {
     const q = query(collection(db, "builds"), orderBy("timestamp", "desc"));
@@ -32,20 +49,50 @@ function LogViewer() {
     return () => unsubscribe();
   }, []);
 
-  // Removed the useEffect hook that polled Jenkins for status.
+  useEffect(() => {
+    const checkLiveStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:4000/api/jenkins/last-build-status");
+        if (response.ok) {
+            const data = await response.json();
+            setIsBuilding(data.building);
+            setJenkinsOnline(true);
+            setLiveStatus(data.building ? "Build is running..." : "Waiting for build...");
+        } else {
+            throw new Error("Jenkins is offline or proxy failed");
+        }
+      } catch (error) {
+        setJenkinsOnline(false);
+        setIsBuilding(false);
+        setLiveStatus("Jenkins is offline");
+      }
+    };
+    
+    const checkDockerStatus = async () => {
+        try {
+            const response = await fetch("http://localhost:4000/api/docker-status");
+            const data = await response.json();
+            setDockerStatus(data);
+        } catch (error) {
+            setDockerStatus({ running: false, status: 'Docker daemon is offline' });
+        }
+    };
+
+    checkLiveStatus();
+    checkDockerStatus();
+    const interval = setInterval(() => {
+        checkLiveStatus();
+        checkDockerStatus();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getStatusIndicatorClass = () => {
-    // This is now hardcoded to 'online'
+    if (!jenkinsOnline) return styles.offline;
+    if (isBuilding) return styles.building;
     return styles.waiting;
   };
 
-  const stats = {
-    total: builds.length,
-    success: builds.filter(b => b.status === 'SUCCESS').length,
-    failure: builds.filter(b => b.status === 'FAILURE').length,
-    unstable: builds.filter(b => b.status === 'UNSTABLE').length,
-  };
-  
   return (
     <div className={styles.logListContainer}>
       <div className={styles.sidebar}>
@@ -61,12 +108,25 @@ function LogViewer() {
               Live Status
             </h3>
             <div className={`${styles.liveStatusIndicator} ${getStatusIndicatorClass()}`}>
-              {/* Hardcoded icon and text */}
-              <FiCheckCircle size={16} />
-              Online
+              {isBuilding ? (
+                <>
+                  <RingLoader size={16} color="#fbbf24" />
+                  Building
+                </>
+              ) : jenkinsOnline ? (
+                <>
+                  <FiCheckCircle size={16} />
+                  Online
+                </>
+              ) : (
+                <>
+                  <FiXCircle size={16} />
+                  Offline
+                </>
+              )}
             </div>
           </div>
-          <p className={styles.liveStatusText}>Jenkins is now online and connected.</p>
+          <p className={styles.liveStatusText}>{liveStatus}</p>
 
           <div className={styles.statsGrid}>
             <motion.div
@@ -103,6 +163,28 @@ function LogViewer() {
             </motion.div>
           </div>
         </motion.div>
+
+        {/* Docker Status Panel */}
+        <motion.div
+          className={styles.dockerStatusCard}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className={styles.dockerStatusHeader}>
+            <h3 className={styles.dockerStatusTitle}>
+              <FiCloud size={20} />
+              Docker Container
+            </h3>
+            <div className={`${styles.dockerStatusIndicator} ${dockerStatus?.running ? styles.running : styles.notRunning}`}>
+                {dockerStatus?.running ? <FiCheckCircle size={16} /> : <FiXCircle size={16} />}
+                {dockerStatus?.running ? "Running" : "Offline"}
+            </div>
+          </div>
+          <p className={styles.dockerStatusText}>
+            {dockerStatus?.status || 'Waiting for status...'}
+          </p>
+        </motion.div>
       </div>
 
       <div className={styles.logList}>
@@ -116,7 +198,7 @@ function LogViewer() {
             Recent pipeline executions and their status
           </p>
         </motion.div>
-
+        
         {builds.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -145,10 +227,7 @@ function LogViewer() {
                   transition={{ delay: index * 0.05 }}
                   layout
                 >
-                  <LogCard
-                    log={build}
-                    onClick={() => setSelectedBuild(build)}
-                  />
+                  <LogCard log={build} onClick={() => setSelectedBuild(build)} />
                 </motion.div>
               ))}
             </AnimatePresence>

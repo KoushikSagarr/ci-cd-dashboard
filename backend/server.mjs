@@ -1029,6 +1029,7 @@ process.on('SIGINT', async () => {
     // Close ngrok tunnel
     if (NGROK_TUNNEL_URL) {
       await ngrok.disconnect();
+      await ngrok.kill();
       console.log('✅ Ngrok tunnel closed');
     }
     

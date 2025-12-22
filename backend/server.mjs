@@ -73,16 +73,24 @@ async function setupNgrokTunnel() {
 
   try {
     const ngrok = await import('ngrok');
+
+    // First, authenticate with ngrok
+    await ngrok.default.authtoken(process.env.NGROK_AUTH_TOKEN);
+
+    // Small delay to ensure session is established
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Now connect with the static domain
     NGROK_TUNNEL_URL = await ngrok.default.connect({
-      authtoken: process.env.NGROK_AUTH_TOKEN,
-      proto: 'http',
       addr: process.env.PORT || 4000,
-      domain: NGROK_STATIC_DOMAIN  // Use your permanent static domain!
+      domain: NGROK_STATIC_DOMAIN
     });
+
     console.log(`Ngrok tunnel started. Public URL: https://${NGROK_STATIC_DOMAIN}`);
   } catch (error) {
-    console.error("Error setting up ngrok tunnel:", error);
+    console.error("Error setting up ngrok tunnel:", error.message || error);
     console.warn("Continuing without ngrok tunnel. External webhooks may not work.");
+    console.log("Tip: Make sure no other ngrok process is running. Try: taskkill /F /IM ngrok.exe");
   }
 }
 

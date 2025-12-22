@@ -66,6 +66,9 @@ const authHeader = `Basic ${Buffer.from(`${JENKINS_USER}:${JENKINS_TOKEN}`).toSt
 let NGROK_TUNNEL_URL = null;
 let Docker = null;
 
+// Your permanent ngrok static domain (never changes!)
+const NGROK_STATIC_DOMAIN = "picked-indirectly-cheetah.ngrok-free.app";
+
 async function setupNgrokTunnel() {
   // Skip ngrok in cloud environment
   if (IS_CLOUD) {
@@ -83,9 +86,10 @@ async function setupNgrokTunnel() {
     NGROK_TUNNEL_URL = await ngrok.default.connect({
       authtoken: process.env.NGROK_AUTH_TOKEN,
       proto: 'http',
-      addr: process.env.PORT || 4000
+      addr: process.env.PORT || 4000,
+      domain: NGROK_STATIC_DOMAIN  // Use your permanent static domain!
     });
-    console.log(`Ngrok tunnel started. Public URL: ${NGROK_TUNNEL_URL}`);
+    console.log(`Ngrok tunnel started. Public URL: https://${NGROK_STATIC_DOMAIN}`);
   } catch (error) {
     console.error("Error setting up ngrok tunnel:", error);
     console.warn("Continuing without ngrok tunnel. External webhooks may not work.");

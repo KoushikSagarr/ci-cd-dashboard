@@ -7,6 +7,7 @@ import styles from "../styles/Dashboard.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { RingLoader } from 'react-spinners';
 import { FiActivity, FiCheckCircle, FiXCircle, FiInfo, FiCloud } from "react-icons/fi";
+import { API } from "../config/api";
 
 interface Build {
   id: string;
@@ -52,14 +53,14 @@ function LogViewer() {
   useEffect(() => {
     const checkLiveStatus = async () => {
       try {
-        const response = await fetch("http://localhost:4000/api/jenkins/last-build-status");
+        const response = await fetch(API.jenkins.lastBuildStatus);
         if (response.ok) {
-            const data = await response.json();
-            setIsBuilding(data.building);
-            setJenkinsOnline(true);
-            setLiveStatus(data.building ? "Build is running..." : "Waiting for build...");
+          const data = await response.json();
+          setIsBuilding(data.building);
+          setJenkinsOnline(true);
+          setLiveStatus(data.building ? "Build is running..." : "Waiting for build...");
         } else {
-            throw new Error("Jenkins is offline or proxy failed");
+          throw new Error("Jenkins is offline or proxy failed");
         }
       } catch (error) {
         setJenkinsOnline(false);
@@ -67,22 +68,22 @@ function LogViewer() {
         setLiveStatus("Jenkins is offline");
       }
     };
-    
+
     const checkDockerStatus = async () => {
-        try {
-            const response = await fetch("http://localhost:4000/api/docker-status");
-            const data = await response.json();
-            setDockerStatus(data);
-        } catch (error) {
-            setDockerStatus({ running: false, status: 'Docker daemon is offline' });
-        }
+      try {
+        const response = await fetch(API.docker.status);
+        const data = await response.json();
+        setDockerStatus(data);
+      } catch (error) {
+        setDockerStatus({ running: false, status: 'Docker daemon is offline' });
+      }
     };
 
     checkLiveStatus();
     checkDockerStatus();
     const interval = setInterval(() => {
-        checkLiveStatus();
-        checkDockerStatus();
+      checkLiveStatus();
+      checkDockerStatus();
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -177,8 +178,8 @@ function LogViewer() {
               Docker Container
             </h3>
             <div className={`${styles.dockerStatusIndicator} ${dockerStatus?.running ? styles.running : styles.notRunning}`}>
-                {dockerStatus?.running ? <FiCheckCircle size={16} /> : <FiXCircle size={16} />}
-                {dockerStatus?.running ? "Running" : "Offline"}
+              {dockerStatus?.running ? <FiCheckCircle size={16} /> : <FiXCircle size={16} />}
+              {dockerStatus?.running ? "Running" : "Offline"}
             </div>
           </div>
           <p className={styles.dockerStatusText}>
@@ -198,7 +199,7 @@ function LogViewer() {
             Recent pipeline executions and their status
           </p>
         </motion.div>
-        
+
         {builds.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}

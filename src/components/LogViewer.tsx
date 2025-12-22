@@ -132,7 +132,7 @@ function LogViewer() {
           <div className={styles.statsGrid}>
             <motion.div
               className={styles.statCard}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <div className={styles.statValue}>{stats.total}</div>
@@ -140,7 +140,7 @@ function LogViewer() {
             </motion.div>
             <motion.div
               className={styles.statCard}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <div className={styles.statValue} style={{ color: 'var(--success)' }}>{stats.success}</div>
@@ -148,7 +148,7 @@ function LogViewer() {
             </motion.div>
             <motion.div
               className={styles.statCard}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <div className={styles.statValue} style={{ color: 'var(--error)' }}>{stats.failure}</div>
@@ -156,7 +156,7 @@ function LogViewer() {
             </motion.div>
             <motion.div
               className={styles.statCard}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <div className={styles.statValue} style={{ color: 'var(--warning)' }}>{stats.unstable}</div>

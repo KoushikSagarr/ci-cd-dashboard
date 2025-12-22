@@ -6,9 +6,7 @@ import admin from "firebase-admin";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import ngrok from "ngrok";
 import cors from "cors";
-import Docker from "dockerode";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -17,6 +15,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
+
+// Detect if running in cloud (Railway, Render, etc.)
+const IS_CLOUD = process.env.RAILWAY_ENVIRONMENT || process.env.RENDER || process.env.NODE_ENV === 'production';
 
 const app = express();
 const server = http.createServer(app);
@@ -61,17 +62,25 @@ if (missingVars.length > 0) {
 
 const authHeader = `Basic ${Buffer.from(`${JENKINS_USER}:${JENKINS_TOKEN}`).toString("base64")}`;
 
-// Ngrok Setup with enhanced error handling
+// Ngrok and Docker - only load when running locally
 let NGROK_TUNNEL_URL = null;
+let Docker = null;
 
 async function setupNgrokTunnel() {
+  // Skip ngrok in cloud environment
+  if (IS_CLOUD) {
+    console.log("Running in cloud environment - ngrok not needed");
+    return;
+  }
+
   if (!process.env.NGROK_AUTH_TOKEN) {
     console.warn("NGROK_AUTH_TOKEN not provided. Skipping ngrok tunnel setup.");
     return;
   }
 
   try {
-    NGROK_TUNNEL_URL = await ngrok.connect({
+    const ngrok = await import('ngrok');
+    NGROK_TUNNEL_URL = await ngrok.default.connect({
       authtoken: process.env.NGROK_AUTH_TOKEN,
       proto: 'http',
       addr: process.env.PORT || 4000

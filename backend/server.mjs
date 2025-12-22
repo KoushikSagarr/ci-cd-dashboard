@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
+import Docker from "dockerode";
 import { exec } from "child_process";
 import { promisify } from "util";
 

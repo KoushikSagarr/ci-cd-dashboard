@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { FiBox, FiCpu, FiHardDrive, FiActivity, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import GaugeChart from './charts/GaugeChart';
 import styles from '../styles/Dashboard.module.css';
-import { API } from '../config/api';
+import { API, apiFetch } from '../config/api';
 
 interface Pod {
     name: string;
@@ -33,7 +33,7 @@ function KubernetesPods() {
     useEffect(() => {
         const fetchK8sStatus = async () => {
             try {
-                const response = await fetch(API.metrics.kubernetes);
+                const response = await apiFetch(API.metrics.kubernetes);
                 const data = await response.json();
                 setK8sData(data);
             } catch (error) {

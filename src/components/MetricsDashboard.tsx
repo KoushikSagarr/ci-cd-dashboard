@@ -7,7 +7,7 @@ import GaugeChart from './charts/GaugeChart';
 import KubernetesPods from './KubernetesPods';
 import PipelineAnalytics from './PipelineAnalytics';
 import styles from '../styles/Dashboard.module.css';
-import { API } from '../config/api';
+import { API, apiFetch } from '../config/api';
 
 interface AppMetrics {
     httpRequestsTotal: number;
@@ -26,7 +26,7 @@ function MetricsDashboard() {
     useEffect(() => {
         const fetchMetrics = async () => {
             try {
-                const response = await fetch(API.metrics.application);
+                const response = await apiFetch(API.metrics.application);
                 if (response.ok) {
                     const data = await response.json();
                     setAppMetrics(data);

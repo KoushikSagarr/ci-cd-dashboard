@@ -7,7 +7,7 @@ import styles from "../styles/Dashboard.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { RingLoader } from 'react-spinners';
 import { FiActivity, FiCheckCircle, FiXCircle, FiInfo, FiCloud } from "react-icons/fi";
-import { API } from "../config/api";
+import { API, apiFetch } from "../config/api";
 
 interface Build {
   id: string;
@@ -53,7 +53,7 @@ function LogViewer() {
   useEffect(() => {
     const checkLiveStatus = async () => {
       try {
-        const response = await fetch(API.jenkins.lastBuildStatus);
+        const response = await apiFetch(API.jenkins.lastBuildStatus);
         if (response.ok) {
           const data = await response.json();
           setIsBuilding(data.building);
@@ -71,7 +71,7 @@ function LogViewer() {
 
     const checkDockerStatus = async () => {
       try {
-        const response = await fetch(API.docker.status);
+        const response = await apiFetch(API.docker.status);
         const data = await response.json();
         setDockerStatus(data);
       } catch (error) {

@@ -1,19 +1,15 @@
 {
-  "name": "ci-cd-dashboard-backend",
+  "name": "backend",
   "version": "1.0.0",
-  "type": "module",
   "main": "server.mjs",
   "scripts": {
     "start": "node server.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "Backend server for CI/CD Dashboard",
+  "description": "",
   "dependencies": {
     "axios": "^1.11.0",
     "body-parser": "^2.2.0",

@@ -16,9 +16,6 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-// Detect if running in cloud (Railway, Render, etc.)
-const IS_CLOUD = process.env.RAILWAY_ENVIRONMENT || process.env.RENDER || process.env.NODE_ENV === 'production';
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -62,20 +59,13 @@ if (missingVars.length > 0) {
 
 const authHeader = `Basic ${Buffer.from(`${JENKINS_USER}:${JENKINS_TOKEN}`).toString("base64")}`;
 
-// Ngrok and Docker - only load when running locally
+// Ngrok Setup with permanent static domain
 let NGROK_TUNNEL_URL = null;
-let Docker = null;
 
 // Your permanent ngrok static domain (never changes!)
 const NGROK_STATIC_DOMAIN = "picked-indirectly-cheetah.ngrok-free.app";
 
 async function setupNgrokTunnel() {
-  // Skip ngrok in cloud environment
-  if (IS_CLOUD) {
-    console.log("Running in cloud environment - ngrok not needed");
-    return;
-  }
-
   if (!process.env.NGROK_AUTH_TOKEN) {
     console.warn("NGROK_AUTH_TOKEN not provided. Skipping ngrok tunnel setup.");
     return;

@@ -59,38 +59,47 @@ if (missingVars.length > 0) {
 
 const authHeader = `Basic ${Buffer.from(`${JENKINS_USER}:${JENKINS_TOKEN}`).toString("base64")}`;
 
-// Ngrok Setup with permanent static domain
-let NGROK_TUNNEL_URL = null;
-
 // Your permanent ngrok static domain (never changes!)
 const NGROK_STATIC_DOMAIN = "picked-indirectly-cheetah.ngrok-free.app";
+let NGROK_TUNNEL_URL = `https://${NGROK_STATIC_DOMAIN}`;
 
 async function setupNgrokTunnel() {
-  if (!process.env.NGROK_AUTH_TOKEN) {
-    console.warn("NGROK_AUTH_TOKEN not provided. Skipping ngrok tunnel setup.");
-    return;
+  // Check if ngrok is already running via CLI (recommended approach)
+  try {
+    const response = await fetch('http://127.0.0.1:4040/api/tunnels');
+    if (response.ok) {
+      const data = await response.json();
+      if (data.tunnels && data.tunnels.length > 0) {
+        console.log(`Ngrok tunnel detected. Public URL: ${data.tunnels[0].public_url}`);
+        NGROK_TUNNEL_URL = data.tunnels[0].public_url;
+        return;
+      }
+    }
+  } catch (e) {
+    // Ngrok CLI not running, try npm package
   }
 
-  try {
-    const ngrok = await import('ngrok');
+  // Try starting ngrok via npm package
+  if (process.env.NGROK_AUTH_TOKEN) {
+    try {
+      const ngrok = await import('ngrok');
+      await ngrok.default.authtoken(process.env.NGROK_AUTH_TOKEN);
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // First, authenticate with ngrok
-    await ngrok.default.authtoken(process.env.NGROK_AUTH_TOKEN);
+      NGROK_TUNNEL_URL = await ngrok.default.connect({
+        addr: process.env.PORT || 4000,
+        domain: NGROK_STATIC_DOMAIN
+      });
 
-    // Small delay to ensure session is established
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Now connect with the static domain
-    NGROK_TUNNEL_URL = await ngrok.default.connect({
-      addr: process.env.PORT || 4000,
-      domain: NGROK_STATIC_DOMAIN
-    });
-
-    console.log(`Ngrok tunnel started. Public URL: https://${NGROK_STATIC_DOMAIN}`);
-  } catch (error) {
-    console.error("Error setting up ngrok tunnel:", error.message || error);
-    console.warn("Continuing without ngrok tunnel. External webhooks may not work.");
-    console.log("Tip: Make sure no other ngrok process is running. Try: taskkill /F /IM ngrok.exe");
+      console.log(`Ngrok tunnel started. Public URL: https://${NGROK_STATIC_DOMAIN}`);
+    } catch (error) {
+      console.warn("Could not start ngrok via npm package.");
+      console.log("\n📌 To enable webhooks, run ngrok CLI in a separate terminal:");
+      console.log(`   ngrok http 4000 --domain=${NGROK_STATIC_DOMAIN}\n`);
+    }
+  } else {
+    console.log("\n📌 To enable webhooks, run ngrok CLI in a separate terminal:");
+    console.log(`   ngrok http 4000 --domain=${NGROK_STATIC_DOMAIN}\n`);
   }
 }
 

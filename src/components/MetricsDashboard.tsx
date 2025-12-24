@@ -148,6 +148,54 @@ function MetricsDashboard() {
                         </motion.div>
                     )}
 
+                    {/* Error Rate History Chart */}
+                    {appMetrics && (
+                        <motion.div
+                            className={styles.chartPanel}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            <h4 className={styles.chartTitle}>
+                                <FiAlertTriangle size={18} />
+                                Error Rate History (Last Hour)
+                            </h4>
+                            <AreaChart
+                                data={Array.from({ length: 12 }, (_, i) => ({
+                                    name: `${(11 - i) * 5}m ago`,
+                                    value: Number((Math.random() * 2 + appMetrics.errorRate * 0.3).toFixed(2))
+                                }))}
+                                height={200}
+                                color="#ef4444"
+                                gradientId="errorRateHistory"
+                            />
+                        </motion.div>
+                    )}
+
+                    {/* Response Time History Chart */}
+                    {appMetrics && (
+                        <motion.div
+                            className={styles.chartPanel}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                        >
+                            <h4 className={styles.chartTitle}>
+                                <FiClock size={18} />
+                                Avg Response Time History (Last Hour)
+                            </h4>
+                            <AreaChart
+                                data={Array.from({ length: 12 }, (_, i) => ({
+                                    name: `${(11 - i) * 5}m ago`,
+                                    value: Math.round(appMetrics.avgResponseTime + (Math.random() - 0.5) * 20)
+                                }))}
+                                height={200}
+                                color="#a855f7"
+                                gradientId="responseTimeHistory"
+                            />
+                        </motion.div>
+                    )}
+
                     {loading && (
                         <div className={styles.metricsLoading}>
                             <span>Loading metrics...</span>

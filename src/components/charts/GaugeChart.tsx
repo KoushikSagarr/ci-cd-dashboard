@@ -8,6 +8,7 @@ interface GaugeChartProps {
     size?: number;
     label?: string;
     unit?: string;
+    invertColors?: boolean; // When true, high values show green (for uptime/health)
 }
 
 function GaugeChart({
@@ -17,7 +18,8 @@ function GaugeChart({
     backgroundColor = 'rgba(51, 65, 85, 0.4)',
     size = 120,
     label,
-    unit = '%'
+    unit = '%',
+    invertColors = false
 }: GaugeChartProps) {
     const percentage = Math.min((value / maxValue) * 100, 100);
 
@@ -28,9 +30,17 @@ function GaugeChart({
 
     // Color gradient based on value
     const getColor = () => {
-        if (percentage > 80) return '#ef4444'; // Red for high usage
-        if (percentage > 60) return '#f59e0b'; // Yellow for medium
-        return color; // Default color for low
+        if (invertColors) {
+            // For uptime/health: high is good (green), low is bad (red)
+            if (percentage > 80) return '#10b981'; // Green for high uptime
+            if (percentage > 60) return '#f59e0b'; // Yellow for medium
+            return '#ef4444'; // Red for low
+        } else {
+            // For CPU/Memory: high is bad (red), low is good
+            if (percentage > 80) return '#ef4444'; // Red for high usage
+            if (percentage > 60) return '#f59e0b'; // Yellow for medium
+            return color; // Default color for low
+        }
     };
 
     return (

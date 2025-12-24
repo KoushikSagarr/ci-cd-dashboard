@@ -121,7 +121,7 @@ function MetricsDashboard() {
                                     maxValue={100}
                                     size={140}
                                     label="Uptime"
-                                    color="#10b981"
+                                    invertColors={true}
                                 />
                             </div>
                         </div>

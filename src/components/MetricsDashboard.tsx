@@ -102,7 +102,7 @@ function MetricsDashboard() {
                             value={appMetrics ? `${appMetrics.errorRate.toFixed(2)}%` : '--'}
                             subtitle="5xx responses"
                             icon={FiAlertTriangle}
-                            color={appMetrics && appMetrics.errorRate > 5 ? 'red' : 'green'}
+                            color="red"
                         />
 
                         <MetricsCard
@@ -114,7 +114,7 @@ function MetricsDashboard() {
                         />
 
                         <div className={styles.gaugeCard}>
-                            <h4 className={styles.gaugeTitle}>System Health</h4>
+                            <h4 className={styles.gaugeTitle} style={{ color: '#10b981' }}>System Health</h4>
                             <div className={styles.gaugeContainer}>
                                 <GaugeChart
                                     value={appMetrics?.uptime || 0}
